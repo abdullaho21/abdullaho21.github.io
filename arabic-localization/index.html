@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arabic Game Localization · Abdullah Alsuqayhi</title>
+<meta name="description" content="Case study: adding Arabic to Homura Hime (Unity 6) and What Remains of Edith Finch (Unreal Engine). Extraction, an Arabic grammar checker, right-to-left rendering and safe installers.">
+<link rel="canonical" href="https://abdullaho21.github.io/arabic-localization/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Abdullah Alsuqayhi">
+<meta property="og:url" content="https://abdullaho21.github.io/arabic-localization/">
+<meta property="og:title" content="Arabic for games that shipped without it">
+<meta property="og:description" content="A case study by Abdullah Alsuqayhi: 10,991 strings, an Arabic grammar gate, and three in-game render tests to make Unity draw Arabic right.">
+<meta property="og:image" content="https://abdullaho21.github.io/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#08090c" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+<link rel="icon" href="../assets/favicon.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}document.documentElement.classList.add("js");if(!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("motion")</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@100..112,400..700&family=Geist+Mono:wght@400..500&family=IBM+Plex+Sans+Arabic:wght@500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="../" aria-label="Abdullah Alsuqayhi, home"><span class="mark" aria-hidden="true">ع</span><span class="brand-name">Abdullah Alsuqayhi</span></a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="../#work">Work</a></li>
+        <li><a href="../#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <button class="icon-btn" id="theme" type="button" aria-label="Switch theme">
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></g></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <article>
+    <header class="cs-hero">
+      <div class="wrap">
+        <a class="back rise" style="--d:0" href="../#work"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M13 8H3M7 4 3 8l4 4"/></svg>All work</a>
+        <div class="cs-kicker rise" style="--d:1"><p class="eyebrow">Case study · Localization · 2026</p><span class="status testing"><i></i>In-game testing</span></div>
+        <h1 class="rise" style="--d:1">Arabic for games that shipped without it</h1>
+        <p class="cs-sub rise" style="--d:2">Homura Hime and What Remains of Edith Finch, in Arabic.</p>
+        <p class="cs-lede rise" style="--d:3">Neither game supports Arabic, and neither engine draws it correctly on its own. Arabic letters join and change shape, sentences run right to left, and diacritics sit above and below their letters. These games’ text systems assume none of that. For Homura Hime I built the whole pipeline, from pulling every string out of the game to a plugin that draws Arabic in its menus and dialogue. For Edith Finch I built an Unreal Engine patch.</p>
+        <dl class="cs-meta rise" style="--d:4">
+          <div><dt class="eyebrow">Role</dt><dd>Project lead: scope, glossary and style decisions, and every in-game test. AI agents drafted the Arabic and assisted with engineering.</dd></div>
+          <div><dt class="eyebrow">When</dt><dd>September–October 2026</dd></div>
+          <div><dt class="eyebrow">Engines</dt><dd>Unity 6 (Homura Hime), Unreal Engine (Edith Finch)</dd></div>
+          <div><dt class="eyebrow">Stack</dt><dd>C#, BepInEx, Harmony, Python, UnityPy, CAMeL Tools, PowerShell</dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <div class="wrap cs-visual reveal">
+      <div class="media media-ar">
+        <div class="ar-title">
+          <p class="ar" lang="ar" dir="rtl">أميرة اللهب</p>
+          <p class="en">Homura Hime · Arabic title</p>
+        </div>
+        <div class="dialog">
+          <p class="q" lang="ar" dir="rtl">حفظ التقدّم الحاليّ؟</p>
+          <div class="btns" lang="ar" dir="rtl"><span>نعم</span><span>لا</span></div>
+          <p class="src">“Save current progress?” · Yes · No</p>
+        </div>
+        <table class="pairs">
+          <caption>In-game menu strings</caption>
+          <tbody>
+            <tr><th scope="row">Mission</th><td lang="ar" dir="rtl">المهمّة</td></tr>
+            <tr><th scope="row">Current Objective</th><td lang="ar" dir="rtl">الهدف الحاليّ</td></tr>
+            <tr><th scope="row">Held Items</th><td lang="ar" dir="rtl">الأغراض المحمولة</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="kpis">
+        <div><b>10,991</b><span>strings extracted from Homura Hime</span></div>
+        <div><b>10,954</b><span>translated in the first full pass</span></div>
+        <div><b>400 / 403</b><span>batches pass the grammar gate</span></div>
+        <div><b>493 / 493</b><span>right-to-left layout checks pass</span></div>
+      </div>
+    </div>
+
+    <div class="wrap cs-layout">
+      <nav class="toc" aria-label="On this page">
+        <p class="eyebrow">On this page</p>
+        <ol>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#text">Finding the text</a></li>
+          <li><a href="#pipeline">The pipeline</a></li>
+          <li><a href="#rendering">Making Arabic render</a></li>
+          <li><a href="#problems">Problems and fixes</a></li>
+          <li><a href="#edith-finch">Edith Finch</a></li>
+          <li><a href="#results">Results</a></li>
+          <li><a href="#skills">Skills</a></li>
+          <li><a href="#next">What’s next</a></li>
+        </ol>
+      </nav>
+
+      <div class="cs-content">
+        <section class="cs-section reveal" id="overview" aria-labelledby="overview-h">
+          <p class="eyebrow">Overview</p>
+          <h2 id="overview-h">Four problems at once.</h2>
+          <div class="prose">
+            <p>Homura Hime is an action game built in Unity 6. Its text lives in three different places, its fonts contain no Arabic letters, and its text components lay out every line from left to right. Adding Arabic meant solving four problems together: find every string, translate it consistently, check Arabic grammar at the scale of eleven thousand lines, and make the engine draw it correctly.</p>
+            <p>I set the ground rules before any code was written, and they shaped every technical decision:</p>
+            <ul class="points">
+              <li><strong>Never change a game file.</strong> The patch only adds files, and removing it restores the game exactly.</li>
+              <li><strong>Never strip diacritics.</strong> Arabic tashkeel carries meaning, so it is kept exactly as written.</li>
+              <li><strong>Every step is reproducible.</strong> Scripts are committed, backups come before overwrites, and source text is preserved byte for byte.</li>
+              <li><strong>No claim without evidence.</strong> A result counts as “working in game” only after I have seen it in the game myself.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="text" aria-labelledby="text-h">
+          <p class="eyebrow">Finding the text</p>
+          <h2 id="text-h">The first plan was for the wrong engine.</h2>
+          <div class="prose">
+            <p>The first brief assumed Unreal Engine tools, because that is what Edith Finch needed. Before building anything, I profiled the game’s files. Homura Hime is <strong>Unity 6000.0.28f1</strong> on the Mono backend, with unencrypted Addressables bundles, so the plan was rebuilt from scratch. Checking the engine first is now step one on every project.</p>
+            <p>The text turned out to live in three places:</p>
+            <ul class="points">
+              <li><strong>19 Unity Localization tables</strong>, each in four languages. Their key names sit in shared data bundles eight folders deep.</li>
+              <li><strong>A settings spreadsheet</strong>, <code>HomuraHime_UILocalization.xlsx</code>, with 126 rows.</li>
+              <li><strong>The dialogue</strong>: one Utage scenario “book” inside <code>sharedassets1.assets</code>, with 187 sheets and 15,601 rows. CSV files that looked like the script were leftovers from the publisher.</li>
+            </ul>
+            <p>The extractor pulled out 2,167 interface rows and 8,755 lines of dialogue, plus 130 speaker names, and checked every string byte for byte against the raw table data. It also catalogued what must survive translation untouched: input icons like <code>[SHOOT]</code> and <code>[L3]</code>, TextMeshPro tags, and titles in literal angle brackets, like <code>&lt;Yudachi Evening Post&gt;</code>, that look like tags but are text.</p>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="pipeline" aria-labelledby="pipeline-h">
+          <p class="eyebrow">The pipeline</p>
+          <h2 id="pipeline-h">From game files to Arabic on screen.</h2>
+          <figure class="diagram">
+            <div class="diagram-box">
+              <svg viewBox="0 0 760 690" role="img" aria-label="Localization pipeline. Read-only game files are extracted into 403 batches. An AI translator drafts the Arabic, then a grammar gate checks every batch. Errors go back to the translator as a fix list, and checker false alarms become new test fixtures. Batches that pass go to human review, then into the build, and a BepInEx plugin draws them in game without changing any game file.">
+                <defs><marker id="loc-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="dg-head"/></marker><marker id="loc-ahh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="dg-head hot"/></marker></defs>
+
+                <rect class="dg-box" x="40" y="20" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="43" text-anchor="middle">Game files</text>
+                <text class="dg-s" x="165" y="61" text-anchor="middle">read-only · SHA-256 hashed</text>
+                <text class="dg-l" x="350" y="51">never modified</text>
+                <line class="dg-a" x1="165" y1="74" x2="165" y2="104" marker-end="url(#loc-ah)"/>
+
+                <rect class="dg-box" x="40" y="106" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="129" text-anchor="middle">Extract</text>
+                <text class="dg-s" x="165" y="147" text-anchor="middle">UnityPy · byte-exact</text>
+                <text class="dg-l" x="350" y="137">19 tables · settings sheet · Utage book</text>
+                <line class="dg-a" x1="165" y1="160" x2="165" y2="190" marker-end="url(#loc-ah)"/>
+
+                <rect class="dg-box" x="40" y="192" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="215" text-anchor="middle">Batches</text>
+                <text class="dg-s" x="165" y="233" text-anchor="middle">403 files · up to 40 rows</text>
+                <text class="dg-l" x="350" y="223">2,167 UI rows · 8,755 dialogue lines</text>
+                <line class="dg-a" x1="165" y1="246" x2="165" y2="276" marker-end="url(#loc-ah)"/>
+
+                <rect class="dg-box" x="40" y="278" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="301" text-anchor="middle">AI translator</text>
+                <text class="dg-s" x="165" y="319" text-anchor="middle">glossary + style guide</text>
+                <text class="dg-l" x="350" y="309">keeps tokens, tags and line breaks</text>
+                <line class="dg-a" x1="165" y1="332" x2="165" y2="362" marker-end="url(#loc-ah)"/>
+
+                <rect class="dg-box hot" x="40" y="364" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="387" text-anchor="middle">Grammar gate</text>
+                <text class="dg-s" x="165" y="405" text-anchor="middle">CAMeL Tools · flags, never edits</text>
+
+                <path class="dg-a hot" d="M290 378H326V305H294" marker-end="url(#loc-ahh)"/>
+                <text class="dg-l" x="336" y="346">errors go back as a fix list</text>
+
+                <line class="dg-a dash" x1="292" y1="404" x2="498" y2="404" marker-start="url(#loc-ah)" marker-end="url(#loc-ah)"/>
+                <text class="dg-l" x="395" y="396" text-anchor="middle">false alarm → fixed checker</text>
+                <rect class="dg-box" x="500" y="377" width="220" height="54" rx="10"/>
+                <text class="dg-t" x="610" y="400" text-anchor="middle">Regression fixtures</text>
+                <text class="dg-s" x="610" y="418" text-anchor="middle">65 cases · re-run all batches</text>
+
+                <line class="dg-a" x1="165" y1="418" x2="165" y2="448" marker-end="url(#loc-ah)"/>
+                <text class="dg-l" x="177" y="438">ready</text>
+
+                <rect class="dg-box" x="40" y="450" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="473" text-anchor="middle">Human review</text>
+                <text class="dg-s" x="165" y="491" text-anchor="middle">signed waivers, name + note</text>
+                <text class="dg-l" x="350" y="481">159 warnings to look at</text>
+                <line class="dg-a" x1="165" y1="504" x2="165" y2="534" marker-end="url(#loc-ah)"/>
+
+                <rect class="dg-box" x="40" y="536" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="559" text-anchor="middle">Build</text>
+                <text class="dg-s" x="165" y="577" text-anchor="middle">ar-strings.tsv · 10,954 strings</text>
+                <text class="dg-l" x="350" y="567">0 problems in the real build</text>
+                <line class="dg-a" x1="165" y1="590" x2="165" y2="620" marker-end="url(#loc-ah)"/>
+
+                <rect class="dg-box safe" x="40" y="622" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="645" text-anchor="middle">BepInEx plugin</text>
+                <text class="dg-s" x="165" y="663" text-anchor="middle">adds files · mirrors each line</text>
+                <text class="dg-l" x="350" y="653">removal restores the game exactly</text>
+              </svg>
+            </div>
+            <figcaption>Two feedback loops keep quality honest. When the gate finds a real error, the batch goes back to the translator with a fix list. When the gate is wrong, the checker gets fixed and a regression case is added, and every delivered batch is checked again. The checker never edits Arabic itself.</figcaption>
+          </figure>
+          <div class="prose">
+            <p>Each batch is a JSON file with exactly nine fields per row. The translator may change only three of them: the Arabic text, notes, and a status that moves from <em>needs translation</em> to <em>translated</em> to <em>reviewed</em>. Batches are created once and never overwritten, so nothing a translator delivers can be lost to a re-run.</p>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="rendering" aria-labelledby="rendering-h">
+          <p class="eyebrow">Making Arabic render</p>
+          <h2 id="rendering-h">Three tests in the real game.</h2>
+          <div class="prose">
+            <p>Unity’s text components don’t shape Arabic and don’t lay out right to left. I tested each idea inside the game with a small test plugin before building the real one.</p>
+          </div>
+          <ol class="steps">
+            <li class="step">
+              <span class="step-n" aria-hidden="true">1</span>
+              <div class="step-body">
+                <p class="when">Render test 1 · 29 September</p>
+                <h3>The obvious switch made things worse</h3>
+                <p>TextMeshPro has a built-in right-to-left setting. It reversed digits, turning 123 into 321, and would reverse any English too. The game’s log revealed something more important: TextMeshPro barely matters here. Almost all text goes through Unity’s older UI.Text and the Utage dialogue engine.</p>
+              </div>
+            </li>
+            <li class="step">
+              <span class="step-n" aria-hidden="true">2</span>
+              <div class="step-body">
+                <p class="when">Render test 2 · 29 September</p>
+                <h3>Letters joined, but lines started on the wrong side</h3>
+                <p>The plugin now pre-shapes the text into Arabic presentation forms, in visual order, with each diacritic placed just before its letter. Arabic appeared joined, in the right order, with diacritics on the right letters, in the game’s own fonts through Windows font fallback. But every line still started from the left. My note after the test: the lines are written from the wrong side.</p>
+              </div>
+            </li>
+            <li class="step ok">
+              <span class="step-n" aria-hidden="true">3</span>
+              <div class="step-body">
+                <p class="when">Render test 3 · 29 September</p>
+                <h3>The game breaks the lines; the plugin mirrors them</h3>
+                <p>Instead of guessing line widths, the plugin lets the game wrap each paragraph with its real font and box size, then mirrors every line and right-aligns it. Dialogue now types in from the right, paragraphs wrap in the right order, and input icons like <code>[L3]</code> stay intact. One thing broke: right-aligned menu labels slid out of their red bars. That set the rule that menus keep the game’s own layout.</p>
+              </div>
+            </li>
+            <li class="step now">
+              <span class="step-n" aria-hidden="true">4</span>
+              <div class="step-body">
+                <p class="when">Next</p>
+                <h3>The full Arabic build in game</h3>
+                <p>The real plugin is built from all 400 passing batches and verified offline. Its first full run in the game is the next test.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="cs-section reveal" id="problems" aria-labelledby="problems-h">
+          <p class="eyebrow">Problems and fixes</p>
+          <h2 id="problems-h">What got in the way.</h2>
+          <div class="challenges">
+            <article class="challenge">
+              <h3>Machine-drafted Arabic needs grammar checks at scale</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>Nobody can proofread eleven thousand lines line by line before every build. Arabic adds traps English doesn’t have: pronouns and adjectives must agree in gender with what they refer to, and a missing or extra pronoun changes the meaning.</p></div>
+                <div><p class="tag fix">What I did</p><p>I specified a grammar gate that runs on every batch before a person sees it. Built on CAMeL Tools’ Arabic morphology, it checks pronoun references, gender agreement, redundant and missing pronouns, numbers, tags, tokens and line breaks. It reports an error only with strong evidence, and it flags problems without ever fixing them.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>400 of 403 batches pass with zero errors. The other three hold only debug strings.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>The checker raised false alarms</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>On real deliveries the checker flagged correct Arabic. The word <span class="ar-inline" lang="ar">الآن</span> (“now”) contains <span class="ar-inline" lang="ar">آن</span>, a character’s name, so it was read as a mention of that character. Some nouns, like <span class="ar-inline" lang="ar">الأرض</span> (“the earth”), are feminine without looking feminine.</p></div>
+                <div><p class="tag fix">What I did</p><p>Every false alarm follows the same procedure: write a test case from the real line, show it fails on the old checker, fix the checker, then re-run every delivered batch. Names now match whole words only, and lexically feminine nouns are handled.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>65 pronoun cases and 38 number cases, each one from a real line.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>The game’s fonts have no Arabic letters</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The game ships Roboto and Japanese and Chinese fonts. None of them contains a single Arabic glyph.</p></div>
+                <div><p class="tag fix">What I did</p><p>Render tests showed that Unity falls back to the operating system’s fonts for missing characters, so Arabic draws on Windows through fonts like Arial and Segoe UI. That works today. Bundling an open-licensed Arabic font, such as Noto Naskh Arabic or Amiri, is the remaining decision.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>Arabic draws in the game’s own text components with no font replaced.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Two languages had to agree on every line</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The line-mirroring logic exists twice: in Python, where the build is checked, and in C#, inside the plugin. If the two ever disagree, a line that passed every offline check could still render wrong in the game.</p></div>
+                <div><p class="tag fix">What I did</p><p>I added a parity test that runs the same cases through both implementations and compares the output, including diacritics, lam-alef ligatures, digits, Latin text and brackets.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>493 of 493 cases match on the real translated data.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Spreadsheets quietly destroy data</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>String IDs like <code>43156479604867072</code> are too large for Excel or JavaScript numbers, which round them silently. Saving the glossary as a plain CSV in Excel wipes out Arabic and Chinese text.</p></div>
+                <div><p class="tag fix">What I did</p><p>IDs are always stored as text, never as numbers. The glossary must be saved as “CSV UTF-8”, and that rule is written into the project instructions for everyone who edits it.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>No lost IDs and no corrupted Arabic between the translator, the tools and the build.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Installing a patch without touching the game</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The easy route replaces the game’s data bundles, which breaks on every update and is hard to undo. I ruled that out from the start.</p></div>
+                <div><p class="tag fix">What I did</p><p>The patch is a BepInEx plugin that only adds files. The installer refuses to overwrite anything, writes a record of every file it adds, and on removal deletes exactly those files and re-checks the game’s hashes. The BepInEx log contains the PC’s hardware names, so it is kept out of Git.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>12 of 12 install and removal tests pass on a mock game folder.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="edith-finch" aria-labelledby="edith-h">
+          <p class="eyebrow">What Remains of Edith Finch</p>
+          <h2 id="edith-h">An Unreal Engine patch, packaged to install in one click.</h2>
+          <div class="prose">
+            <p>Edith Finch was the first game I localized into Arabic. It runs on Unreal Engine, which has its own localization system, so the patch follows Unreal’s route instead of a runtime plugin. The Arabic text ships in a priority patch archive, <code>FinchGame_Arabic_P.pak</code>, which the engine loads on top of the original files. Nothing in the game’s folder is overwritten.</p>
+            <p>The patch installs and uninstalls with one click, through batch files driving a PowerShell script, and comes with instructions in both Arabic and English.</p>
+            <p>The most useful thing Edith Finch taught me was not a tool. It was the habit of checking how a game is built before planning anything, which is exactly what saved Homura Hime from a pipeline built for the wrong engine.</p>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="results" aria-labelledby="results-h">
+          <p class="eyebrow">Results</p>
+          <h2 id="results-h">Where it stands.</h2>
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr><th scope="col">Homura Hime</th><th scope="col">Result</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Strings extracted (UI, dialogue, names)</th><td>10,991</td></tr>
+                <tr><th scope="row">Translated in the first full pass</th><td>10,954</td></tr>
+                <tr><th scope="row">Batches passing the grammar gate</th><td>400 / 403</td></tr>
+                <tr><th scope="row">Warnings left for human review</th><td>159</td></tr>
+                <tr><th scope="row">Right-to-left parity cases, Python vs C#</th><td>493 / 493</td></tr>
+                <tr><th scope="row">Install and removal tests</th><td>12 / 12</td></tr>
+                <tr><th scope="row">In-game render tests</th><td>3</td></tr>
+              </tbody>
+              <caption>The 37 untranslated rows are debug and template strings, left blank on purpose. The plugin compiles against the game’s own libraries and builds every passing string with zero problems; its first full run in the game is next.</caption>
+            </table>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="skills" aria-labelledby="skills-h">
+          <p class="eyebrow">Skills</p>
+          <h2 id="skills-h">What this project took.</h2>
+          <div class="skills-grid">
+            <div class="skill"><h3>Unity internals</h3><p>Asset bundles, Addressables, Unity Localization tables and the Utage dialogue engine, read with UnityPy.</p></div>
+            <div class="skill"><h3>Runtime patching in C#</h3><p>BepInEx plugins and Harmony patches on the engine’s text components, with reflection where APIs are private.</p></div>
+            <div class="skill"><h3>Arabic text engineering</h3><p>Shaping, presentation forms, bidirectional order, diacritics and line mirroring.</p></div>
+            <div class="skill"><h3>Language tooling</h3><p>Grammar checks built on CAMeL Tools morphology for agreement and pronoun errors.</p></div>
+            <div class="skill"><h3>Data pipelines</h3><p>Batching, import, validation, sign-offs and reproducible builds from thousands of rows.</p></div>
+            <div class="skill"><h3>Test design</h3><p>A regression case for every false alarm, and parity tests across two languages.</p></div>
+            <div class="skill"><h3>Unreal Engine</h3><p>Localization assets and priority .pak patches that load over the original game.</p></div>
+            <div class="skill"><h3>Project leadership</h3><p>Ground rules, a decision log, and an evidence ledger that separates “seen in game” from “verified offline”.</p></div>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="next" aria-labelledby="next-h">
+          <p class="eyebrow">What’s next</p>
+          <h2 id="next-h">The remaining work.</h2>
+          <div class="prose">
+            <ul class="points">
+              <li>The first in-game run of the full Arabic build, then a human review pass over the 159 warnings.</li>
+              <li>Right-to-left handling for tutorial lines that mix text with key icons.</li>
+              <li>About 80 images with English text: area titles, boss cards, result screens and the title logo.</li>
+              <li>A check that measures whether Arabic fits each text box, and the choice of a bundled Arabic font.</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </div>
+  </article>
+
+  <nav class="wrap more" aria-label="More projects">
+    <a href="../gravity-rush/"><span class="eyebrow">Next project</span><b>Gravity Rush Remastered research</b><span>PS4 file formats decoded and redrawn in <span class="nw">C++</span></span></a>
+    <a href="../jarvis/"><span class="eyebrow">Also</span><b>Jarvis</b><span>Offline voice control for the Linux desktop</span></a>
+  </nav>
+
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <div class="wrap reveal">
+      <p class="eyebrow">Contact</p>
+      <h2 class="h2" id="contact-h">Need a game or an app in Arabic?</h2>
+      <p class="contact-lede">Tell me what you’re building and where you need help. Email reaches me fastest.</p>
+      <div class="email-row">
+        <a class="email" id="email" href="mailto:abdullahalsuqayhi5@gmail.com">abdullahalsuqayhi5@gmail.com</a>
+        <button class="btn" id="copy" type="button"><span id="copy-label">Copy</span><span class="sr-only"> email address</span></button>
+      </div>
+      <span class="sr-only" id="live" aria-live="polite"></span>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p>© <span id="year">2026</span> Abdullah Alsuqayhi</p>
+    <a href="../">Home</a>
+  </div>
+</footer>
+</body>
+</html>

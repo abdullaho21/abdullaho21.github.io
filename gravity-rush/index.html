@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gravity Rush Research · Abdullah Alsuqayhi</title>
+<meta name="description" content="Case study: private research into Gravity Rush Remastered's PS4 file formats, with native C++ readers and a Direct3D renderer verified against reference digests.">
+<link rel="canonical" href="https://abdullaho21.github.io/gravity-rush/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Abdullah Alsuqayhi">
+<meta property="og:url" content="https://abdullaho21.github.io/gravity-rush/">
+<meta property="og:title" content="Gravity Rush Remastered, read from its own data">
+<meta property="og:description" content="A case study by Abdullah Alsuqayhi: decoding undocumented PS4 formats and redrawing them natively in C++.">
+<meta property="og:image" content="https://abdullaho21.github.io/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#08090c" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+<link rel="icon" href="../assets/favicon.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}document.documentElement.classList.add("js");if(!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("motion")</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@100..112,400..700&family=Geist+Mono:wght@400..500&family=IBM+Plex+Sans+Arabic:wght@500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
+<script src="../assets/mesh.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="../" aria-label="Abdullah Alsuqayhi, home"><span class="mark" aria-hidden="true">ع</span><span class="brand-name">Abdullah Alsuqayhi</span></a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="../#work">Work</a></li>
+        <li><a href="../#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <button class="icon-btn" id="theme" type="button" aria-label="Switch theme">
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></g></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <article>
+    <header class="cs-hero">
+      <div class="wrap">
+        <a class="back rise" style="--d:0" href="../#work"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M13 8H3M7 4 3 8l4 4"/></svg>All work</a>
+        <div class="cs-kicker rise" style="--d:1"><p class="eyebrow">Case study · Reverse engineering · 2026</p><span class="status"><i></i>Private research</span></div>
+        <h1 class="rise" style="--d:1">Gravity Rush Remastered, read from its own data</h1>
+        <p class="cs-sub rise" style="--d:2">Decoding a PS4 game’s formats and redrawing them natively in <span class="nw">C++</span>.</p>
+        <p class="cs-lede rise" style="--d:3">Gravity Rush Remastered only runs on PlayStation. My long-term goal is to understand it well enough to run its content natively on a PC. This is a private study of the PS4 release’s data: I mapped its archives and scripts, decoded its model, skeleton, animation and scene formats, and wrote <span class="nw">C++</span> readers and a Direct3D renderer that draw the opening area from the original files.</p>
+        <dl class="cs-meta rise" style="--d:4">
+          <div><dt class="eyebrow">Role</dt><dd>Research lead: goals, ground rules and review of every result. AI agents assisted with analysis and implementation.</dd></div>
+          <div><dt class="eyebrow">When</dt><dd>October 2026</dd></div>
+          <div><dt class="eyebrow">Platforms</dt><dd>PS4 data, read on Windows and Linux</dd></div>
+          <div><dt class="eyebrow">Stack</dt><dd><span class="nw">C++</span>, Direct3D, MSVC, Wine, Python</dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <div class="wrap cs-visual reveal">
+      <div class="media media-gr">
+        <canvas id="mesh" data-center=".34" aria-hidden="true"></canvas>
+        <p class="media-note" aria-hidden="true">Illustration, not game data</p>
+        <div class="verify">
+          <h4>Verification results</h4>
+          <ul>
+            <li><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg><b>Opening model</b><span>114,566 vertices, 153,904 triangles, byte-exact <code>fa916943…</code></span></li>
+            <li><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg><b>Scene placements</b><span>27 layouts decoded natively <code>7d544c7b…</code></span></li>
+            <li><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg><b>World renderer</b><span>14 of 14 placements found in the drawn frame <code>1c4f5fbe…</code></span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="kpis">
+        <div><b>21,897</b><span>archive entries catalogued</span></div>
+        <div><b>34 GB</b><span>decoded, every block size checked</span></div>
+        <div><b>1,204</b><span>Lua scripts mapped, never run</span></div>
+        <div><b>153,904</b><span>triangles matched byte for byte</span></div>
+      </div>
+    </div>
+
+    <div class="wrap cs-layout">
+      <nav class="toc" aria-label="On this page">
+        <p class="eyebrow">On this page</p>
+        <ol>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#rules">Ground rules</a></li>
+          <li><a href="#structure">How it fits together</a></li>
+          <li><a href="#milestones">Milestones</a></li>
+          <li><a href="#problems">Problems and fixes</a></li>
+          <li><a href="#results">Results</a></li>
+          <li><a href="#skills">Skills</a></li>
+          <li><a href="#next">What’s next</a></li>
+        </ol>
+      </nav>
+
+      <div class="cs-content">
+        <section class="cs-section reveal" id="overview" aria-labelledby="overview-h">
+          <p class="eyebrow">Overview</p>
+          <h2 id="overview-h">A game with no documentation at all.</h2>
+          <div class="prose">
+            <p>Nothing about Gravity Rush’s file formats is public. There is no SDK, no format specification and no source. Everything on this page was worked out from the bytes: how the archives are laid out, how a model stores its vertices, how a skeleton is wired, how animation is compressed, and how a scene places its objects.</p>
+            <p>The work moves in small, provable steps. Each step starts with a hypothesis about a format, turns it into a parser, and only counts once the parser’s output closes exactly: every bit accounted for, every transform consistent, every result matching a sealed reference digest. When an idea fails that test, it is recorded as failed and never forced to fit.</p>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="rules" aria-labelledby="rules-h">
+          <p class="eyebrow">Ground rules</p>
+          <h2 id="rules-h">Careful by design.</h2>
+          <div class="prose">
+            <p>Reverse engineering a commercial game carries legal and ethical weight, so the limits came first and every milestone was checked against them:</p>
+            <ul class="points">
+              <li><strong>Read-only game files.</strong> Every inspection verifies the SHA-256 of all 14 game inputs before and after; any change rejects the result.</li>
+              <li><strong>Nothing leaves memory.</strong> Decoded textures, meshes and animations stay in RAM. No exports, no caches, no screenshots of game assets.</li>
+              <li><strong>Nothing runs.</strong> Extracted scripts and binaries are read, never executed. The renderer is original <span class="nw">C++</span>.</li>
+              <li><strong>No DRM work.</strong> No decryption, no keys, nothing uploaded or released.</li>
+            </ul>
+          </div>
+          <div class="callout"><p><strong>An honest label.</strong> This is a private study informed directly by the game’s data. It is not a clean-room reimplementation, and none of it has been published.</p></div>
+        </section>
+
+        <section class="cs-section reveal" id="structure" aria-labelledby="structure-h">
+          <p class="eyebrow">How it fits together</p>
+          <h2 id="structure-h">From archives to a verified frame.</h2>
+          <figure class="diagram">
+            <div class="diagram-box">
+              <svg viewBox="0 0 760 550" role="img" aria-label="Research structure. The read-only game package holds five PSARC archives; the encrypted executable is left untouched. Archive entries split into six formats: GX64 models, 20SE skeletons, 40AE animation, GNF textures, FBKK scenes and Lua scripts. The first five feed C++ readers that are checked against sealed digests, then a Direct3D renderer, then a frame readback check. Lua scripts feed a separate engine map. Everything after the archives stays in memory.">
+                <defs><marker id="gr-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="dg-head"/></marker></defs>
+
+                <rect class="dg-box" x="40" y="20" width="260" height="54" rx="10"/>
+                <text class="dg-t" x="170" y="43" text-anchor="middle">Game package</text>
+                <text class="dg-s" x="170" y="61" text-anchor="middle">read-only · hashed before and after</text>
+
+                <rect class="dg-box" x="470" y="20" width="250" height="54" rx="10" style="stroke-dasharray:4 4"/>
+                <text class="dg-t" x="595" y="43" text-anchor="middle">Executable (eboot.bin)</text>
+                <text class="dg-s" x="595" y="61" text-anchor="middle">encrypted · left untouched</text>
+                <line class="dg-wall" x1="310" y1="47" x2="460" y2="47"/>
+                <text class="dg-wall-label" x="385" y="40" text-anchor="middle">no DRM work</text>
+
+                <line class="dg-a" x1="170" y1="74" x2="170" y2="104" marker-end="url(#gr-ah)"/>
+                <rect class="dg-box" x="40" y="106" width="260" height="54" rx="10"/>
+                <text class="dg-t" x="170" y="129" text-anchor="middle">PSARC archives</text>
+                <text class="dg-s" x="170" y="147" text-anchor="middle">5 archives · 21,897 entries</text>
+                <text class="dg-l" x="320" y="137">34 GB decoded, every block size checked</text>
+
+                <path class="dg-a" d="M170 160V180M92 180H667"/>
+                <line class="dg-a" x1="92" y1="180" x2="92" y2="198" marker-end="url(#gr-ah)"/>
+                <line class="dg-a" x1="207" y1="180" x2="207" y2="198" marker-end="url(#gr-ah)"/>
+                <line class="dg-a" x1="322" y1="180" x2="322" y2="198" marker-end="url(#gr-ah)"/>
+                <line class="dg-a" x1="437" y1="180" x2="437" y2="198" marker-end="url(#gr-ah)"/>
+                <line class="dg-a" x1="552" y1="180" x2="552" y2="198" marker-end="url(#gr-ah)"/>
+                <line class="dg-a" x1="667" y1="180" x2="667" y2="198" marker-end="url(#gr-ah)"/>
+
+                <rect class="dg-box" x="40" y="200" width="104" height="54" rx="10"/>
+                <text class="dg-t" x="92" y="223" text-anchor="middle">GX64</text>
+                <text class="dg-s" x="92" y="241" text-anchor="middle">models</text>
+                <rect class="dg-box" x="155" y="200" width="104" height="54" rx="10"/>
+                <text class="dg-t" x="207" y="223" text-anchor="middle">20SE</text>
+                <text class="dg-s" x="207" y="241" text-anchor="middle">skeletons</text>
+                <rect class="dg-box" x="270" y="200" width="104" height="54" rx="10"/>
+                <text class="dg-t" x="322" y="223" text-anchor="middle">40AE</text>
+                <text class="dg-s" x="322" y="241" text-anchor="middle">animation</text>
+                <rect class="dg-box" x="385" y="200" width="104" height="54" rx="10"/>
+                <text class="dg-t" x="437" y="223" text-anchor="middle">GNF</text>
+                <text class="dg-s" x="437" y="241" text-anchor="middle">textures</text>
+                <rect class="dg-box" x="500" y="200" width="104" height="54" rx="10"/>
+                <text class="dg-t" x="552" y="223" text-anchor="middle">FBKK</text>
+                <text class="dg-s" x="552" y="241" text-anchor="middle">scenes</text>
+                <rect class="dg-box" x="615" y="200" width="104" height="54" rx="10"/>
+                <text class="dg-t" x="667" y="223" text-anchor="middle">Lua</text>
+                <text class="dg-s" x="667" y="241" text-anchor="middle">never run</text>
+
+                <path class="dg-a" d="M92 254V272M207 254V272M322 254V272M437 254V272M552 254V272M92 272H552"/>
+                <line class="dg-a" x1="380" y1="272" x2="380" y2="318" marker-end="url(#gr-ah)"/>
+                <line class="dg-a" x1="667" y1="254" x2="667" y2="318" marker-end="url(#gr-ah)"/>
+
+                <rect class="dg-zone" x="200" y="292" width="360" height="248" rx="14" style="stroke:var(--warn)"/>
+                <text class="dg-wall-label" x="544" y="309" text-anchor="end">In memory · no exports</text>
+
+                <rect class="dg-box hot" x="250" y="320" width="260" height="54" rx="10"/>
+                <text class="dg-t" x="380" y="343" text-anchor="middle">C++ readers</text>
+                <text class="dg-s" x="380" y="361" text-anchor="middle">checked against sealed digests</text>
+                <line class="dg-a" x1="380" y1="374" x2="380" y2="404" marker-end="url(#gr-ah)"/>
+                <text class="dg-l" x="392" y="394">meshes · bones · poses</text>
+
+                <rect class="dg-box" x="250" y="406" width="260" height="54" rx="10"/>
+                <text class="dg-t" x="380" y="429" text-anchor="middle">Direct3D renderer</text>
+                <text class="dg-s" x="380" y="447" text-anchor="middle">MSVC on Windows · Wine on Linux</text>
+                <line class="dg-a" x1="380" y1="460" x2="380" y2="476" marker-end="url(#gr-ah)"/>
+
+                <rect class="dg-box safe" x="250" y="478" width="260" height="54" rx="10"/>
+                <text class="dg-t" x="380" y="501" text-anchor="middle">Frame readback check</text>
+                <text class="dg-s" x="380" y="519" text-anchor="middle">every placement found on screen</text>
+
+                <rect class="dg-box" x="590" y="320" width="150" height="54" rx="10"/>
+                <text class="dg-t" x="665" y="343" text-anchor="middle">Engine map</text>
+                <text class="dg-s" x="665" y="361" text-anchor="middle">61,023 call sites</text>
+              </svg>
+            </div>
+            <figcaption>The game’s code is encrypted and stays that way, so the work starts from its data. Five formats feed the native readers and renderer. The Lua scripts are read as text to map how the game calls into its engine. Everything inside the dashed box exists only in memory.</figcaption>
+          </figure>
+        </section>
+
+        <section class="cs-section reveal" id="milestones" aria-labelledby="milestones-h">
+          <p class="eyebrow">Milestones</p>
+          <h2 id="milestones-h">One provable step at a time.</h2>
+          <ol class="steps">
+            <li class="step ok">
+              <span class="step-n" aria-hidden="true">2</span>
+              <div class="step-body">
+                <p class="when">Milestone 2 · Inventory</p>
+                <h3>Mapping everything in the box</h3>
+                <p>Catalogued all five archives: 21,897 named entries and 534,510 data blocks, about 34 GB once decoded, with every block and entry size matching its manifest. Inventoried 1,204 Lua scripts and mapped 61,023 call sites without running any of them. Resolved all 681 system functions the game imports by name. Built a desktop asset viewer that previews textures and audio from memory.</p>
+              </div>
+            </li>
+            <li class="step ok">
+              <span class="step-n" aria-hidden="true">4</span>
+              <div class="step-body">
+                <p class="when">Milestone 4 · 3 October</p>
+                <h3>The first real model on screen</h3>
+                <p>A native <span class="nw">C++</span> and Direct3D prototype drew its first original model from the GX64 data: the apple from the opening scene, 2,180 vertices and 3,918 triangles, with its texture coordinates and material links proven.</p>
+              </div>
+            </li>
+            <li class="step ok">
+              <span class="step-n" aria-hidden="true">5</span>
+              <div class="step-body">
+                <p class="when">Milestone 5 · 4 October</p>
+                <h3>Animation decoded</h3>
+                <p>Decoded the 40AE animation codec and played four original clips. Rotations matched the skeleton’s rest pose with an error below 1.4 × 10<sup>−7</sup>.</p>
+              </div>
+            </li>
+            <li class="step ok">
+              <span class="step-n" aria-hidden="true">6</span>
+              <div class="step-body">
+                <p class="when">Milestone 6 · 4 October</p>
+                <h3>Skinned meshes</h3>
+                <p>Applied multi-bone skinning to all ten meshes of the opening model. All ten rigs, 114,566 vertex weights and 169 inverse bind matrices close within 10<sup>−5</sup>.</p>
+              </div>
+            </li>
+            <li class="step ok">
+              <span class="step-n" aria-hidden="true">7</span>
+              <div class="step-body">
+                <p class="when">Milestone 7 · 4 October</p>
+                <h3>The original camera</h3>
+                <p>Recovered the opening camera’s named eye, aim and up points and its near and far planes. The gate for this milestone ran 61 parser methods and 148 malformed inputs that the native code had to refuse.</p>
+              </div>
+            </li>
+            <li class="step now">
+              <span class="step-n" aria-hidden="true">↻</span>
+              <div class="step-body">
+                <p class="when">Linux continuation · 21 October</p>
+                <h3>A new machine, the same results</h3>
+                <p>Moved the project to Linux and reproduced every reference packet exactly. A separate world viewer now draws 17 world models, 447 meshes and 40 textures, and verifies all 14 object placements in the rendered frame.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <section class="cs-section reveal" id="problems" aria-labelledby="problems-h">
+          <p class="eyebrow">Problems and fixes</p>
+          <h2 id="problems-h">What got in the way.</h2>
+          <div class="challenges">
+            <article class="challenge">
+              <h3>The game’s code is encrypted</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The game’s executable is an encrypted PS4 binary. Decrypting it would mean DRM work, which I ruled out from the start, so disassemblers like Ghidra had nothing to read.</p></div>
+                <div><p class="tag fix">What I did</p><p>I started from the data instead. The 1,204 Lua scripts are readable text, and the 681 system functions the game imports can be named using the open-source shadPS4 emulator’s tables. Together they give a first map of how the scripts call into the engine.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>A working picture of the engine from 61,023 call sites, without touching its code.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Animation hidden in packed bitstreams</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The 40AE animation format is undocumented. It packs each frame into variable-length bitstreams, and stores rotations with one axis left out to save space.</p></div>
+                <div><p class="tag fix">What I did</p><p>I decoded it field by field and only accepted a reading when every bit count, value range and padding byte added up exactly. The missing rotation axis is rebuilt from the other three, and the first pose of each clip is compared against the skeleton’s own rest pose.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>Four original clips play, with rotation error below 1.4 × 10<sup>−7</sup>.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>A hypothesis that turned out wrong</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>An early reading of the skin palette mapped entry 41 to scene node 54. Static rendering never used that mapping, so nothing failed and the mistake sat unnoticed.</p></div>
+                <div><p class="tag fix">What I did</p><p>When skinning was built, the proof showed entry 41 actually points to node 40, counting from one. I corrected it, marked the old record as historical, and made every rig pass a closure check before any mesh could use it.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>All 169 inverse bind matrices now close within 10<sup>−5</sup>.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>A field that wouldn’t give up its meaning</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>One field in the scene records looked like it selected which mesh to draw. Building on that guess would have been easy, and wrong if the guess was wrong.</p></div>
+                <div><p class="tag fix">What I did</p><p>I tested the theory against everything decoded so far. 34 of 183 references matched the hash of a model’s name, and 149 matched nothing in 1.28 GB of data. The field identifies whole files and cannot select meshes, so placements use the other, proven fields, and this one is recorded as unresolved.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>The renderer depends only on fields that are proven.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Windows code, Linux machine</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The native code was written for Windows with Microsoft’s compiler. When I moved to Linux, rewriting it would have invalidated every result proven so far.</p></div>
+                <div><p class="tag fix">What I did</p><p>I wrote small compatibility layers for the Windows headers it uses, so the same sources build unchanged on Linux. For the renderer I cross-built with the real MSVC compiler and ran it under Wine. Wine output is treated as proof of correct decoding and drawing, not as proof of identical Windows pixels.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>The reference packet <code>fa916943…</code> reproduced exactly, and 13 of 13 behavior tests pass.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Proving the picture is right without saving it</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The usual proof that a renderer works is a screenshot, but game assets are not allowed to leave memory.</p></div>
+                <div><p class="tag fix">What I did</p><p>The renderer reads its own frame back from the GPU, projects every object’s placement onto the screen, and checks that the object is actually drawn there. Only counts and a digest of the frame are kept.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>All 14 placements found, with 97,076 visible pixels and frame digest <code>1c4f5fbe…</code>.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="results" aria-labelledby="results-h">
+          <p class="eyebrow">Results</p>
+          <h2 id="results-h">Where it stands.</h2>
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr><th scope="col">Measurement</th><th scope="col">Result</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Archive entries catalogued</th><td>21,897</td></tr>
+                <tr><th scope="row">Data decoded and size-checked</th><td>34.0 GB</td></tr>
+                <tr><th scope="row">Lua scripts inventoried, none run</th><td>1,204</td></tr>
+                <tr><th scope="row">PS4 imports resolved by name</th><td>681 / 681</td></tr>
+                <tr><th scope="row">Opening model, byte-exact</th><td>153,904 triangles</td></tr>
+                <tr><th scope="row">World drawn natively</th><td>17 models · 447 meshes</td></tr>
+                <tr><th scope="row">Placements verified in frame</th><td>14 / 14</td></tr>
+                <tr><th scope="row">Malformed inputs safely refused</th><td>148</td></tr>
+              </tbody>
+              <caption>The full game does not run natively yet. This is a study of formats and a rendering foundation, and the remaining gaps are listed below.</caption>
+            </table>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="skills" aria-labelledby="skills-h">
+          <p class="eyebrow">Skills</p>
+          <h2 id="skills-h">What this project took.</h2>
+          <div class="skills-grid">
+            <div class="skill"><h3>Binary reverse engineering</h3><p>Decoding undocumented archives, models, skeletons, animation and scenes from raw bytes.</p></div>
+            <div class="skill"><h3>3D graphics</h3><p>Direct3D rendering, vertex and index buffers, textures, materials and cameras.</p></div>
+            <div class="skill"><h3>Animation math</h3><p>Quaternions, interpolation, skeleton hierarchies, inverse bind matrices and skinning.</p></div>
+            <div class="skill"><h3><span class="nw">C++</span> and portability</h3><p>Native readers built with MSVC, and the same sources on Linux through compatibility layers and Wine.</p></div>
+            <div class="skill"><h3>Static analysis</h3><p>Mapping 1,204 scripts and 681 imports to understand an engine without running it.</p></div>
+            <div class="skill"><h3>Verification</h3><p>Reference digests, closure checks and labels that separate proven from guessed.</p></div>
+            <div class="skill"><h3>Python tooling</h3><p>Probes, parser tests and a desktop asset viewer that works from memory.</p></div>
+            <div class="skill"><h3>Responsible research</h3><p>Read-only inputs, no exports, no DRM work, and nothing published.</p></div>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="next" aria-labelledby="next-h">
+          <p class="eyebrow">What’s next</p>
+          <h2 id="next-h">The remaining gaps.</h2>
+          <div class="prose">
+            <ul class="points">
+              <li>Skinned character meshes in the world view, which use a different vertex layout.</li>
+              <li>The game’s original materials, shaders and transparency.</li>
+              <li>Pixel evidence from a Windows GPU, beyond what Wine can prove.</li>
+              <li>The full opening sequence, then everything after it.</li>
+            </ul>
+          </div>
+        </section>
+      </div>
+    </div>
+  </article>
+
+  <nav class="wrap more" aria-label="More projects">
+    <a href="../jarvis/"><span class="eyebrow">Next project</span><b>Jarvis</b><span>Offline voice control for the Linux desktop</span></a>
+    <a href="../arabic-localization/"><span class="eyebrow">Also</span><b>Arabic for games that shipped without it</b><span>Homura Hime and What Remains of Edith Finch</span></a>
+  </nav>
+
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <div class="wrap reveal">
+      <p class="eyebrow">Contact</p>
+      <h2 class="h2" id="contact-h">Have a hard problem with no manual?</h2>
+      <p class="contact-lede">Tell me what you’re building and where you need help. Email reaches me fastest.</p>
+      <div class="email-row">
+        <a class="email" id="email" href="mailto:abdullahalsuqayhi5@gmail.com">abdullahalsuqayhi5@gmail.com</a>
+        <button class="btn" id="copy" type="button"><span id="copy-label">Copy</span><span class="sr-only"> email address</span></button>
+      </div>
+      <span class="sr-only" id="live" aria-live="polite"></span>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p>© <span id="year">2026</span> Abdullah Alsuqayhi</p>
+    <a href="../">Home</a>
+  </div>
+</footer>
+</body>
+</html>

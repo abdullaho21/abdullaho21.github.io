@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jarvis · Abdullah Alsuqayhi</title>
+<meta name="description" content="Case study: Jarvis, offline voice control for the Linux desktop. How the voice pipeline was rebuilt twice, and the problems solved along the way.">
+<link rel="canonical" href="https://abdullaho21.github.io/jarvis/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Abdullah Alsuqayhi">
+<meta property="og:url" content="https://abdullaho21.github.io/jarvis/">
+<meta property="og:title" content="Jarvis: offline voice control for Linux">
+<meta property="og:description" content="A case study by Abdullah Alsuqayhi: two speech models, a strict allowlist, and the bugs that shaped them.">
+<meta property="og:image" content="https://abdullaho21.github.io/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="color-scheme" content="dark light">
+<meta name="theme-color" content="#08090c" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+<link rel="icon" href="../assets/favicon.png" type="image/png" sizes="64x64">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}document.documentElement.classList.add("js");if(!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("motion")</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@100..112,400..700&family=Geist+Mono:wght@400..500&family=IBM+Plex+Sans+Arabic:wght@500;600&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<script src="../assets/site.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="../" aria-label="Abdullah Alsuqayhi, home"><span class="mark" aria-hidden="true">ع</span><span class="brand-name">Abdullah Alsuqayhi</span></a>
+    <nav aria-label="Primary">
+      <ul class="nav-links">
+        <li><a href="../#work">Work</a></li>
+        <li><a href="../#about">About</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+    <button class="icon-btn" id="theme" type="button" aria-label="Switch theme">
+      <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5a8.5 8.5 0 1 0 10.7 10.7z"/></svg>
+      <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/></g></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <article>
+    <header class="cs-hero">
+      <div class="wrap">
+        <a class="back rise" style="--d:0" href="../#work"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M13 8H3M7 4 3 8l4 4"/></svg>All work</a>
+        <div class="cs-kicker rise" style="--d:1"><p class="eyebrow">Case study · Voice software · 2026</p><span class="status"><i></i>Open source</span></div>
+        <h1 class="rise" style="--d:1">Jarvis</h1>
+        <p class="cs-sub rise" style="--d:2">Offline voice control for the Linux desktop.</p>
+        <p class="cs-lede rise" style="--d:3">Jarvis runs a Linux desktop by voice. It opens apps, switches workspaces, changes the volume, records the screen and saves the last two minutes of a game. Speech recognition runs entirely on the CPU, with no cloud service, no account and no API key, and nothing you say is stored.</p>
+        <dl class="cs-meta rise" style="--d:4">
+          <div><dt class="eyebrow">Role</dt><dd>Lead developer: product decisions and daily testing on my own desktop. Built with AI coding agents under my direction.</dd></div>
+          <div><dt class="eyebrow">When</dt><dd>October 2026</dd></div>
+          <div><dt class="eyebrow">Platform</dt><dd>Linux, Hyprland (Wayland), PipeWire</dd></div>
+          <div><dt class="eyebrow">Source</dt><dd><a href="https://github.com/abdullaho21/jarvis" rel="noopener">github.com/abdullaho21/jarvis</a></dd></div>
+        </dl>
+      </div>
+    </header>
+
+    <div class="wrap cs-visual reveal">
+      <figure class="media media-jv">
+        <img class="shot" src="../assets/jarvis-ui.webp" width="1024" height="576" decoding="async" alt="Jarvis settings window, Overview page: the microphone stays paused until the user completes the privacy setup.">
+        <figcaption class="voice" aria-hidden="true"><span class="bars"><i></i><i></i><i></i><i></i><i></i></span><span>“Hey Jarvis, open Firefox” <span class="to">→ Firefox</span></span></figcaption>
+      </figure>
+      <div class="kpis">
+        <div><b>1.05 s</b><span>median command latency</span></div>
+        <div><b>0.2–0.6%</b><span>of one CPU core while listening</span></div>
+        <div><b>657 MiB</b><span>background memory, down from 1,090</span></div>
+        <div><b>176</b><span>automated tests</span></div>
+      </div>
+    </div>
+
+    <div class="wrap cs-layout">
+      <nav class="toc" aria-label="On this page">
+        <p class="eyebrow">On this page</p>
+        <ol>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="#problems">Problems and fixes</a></li>
+          <li><a href="#results">Results</a></li>
+          <li><a href="#skills">Skills</a></li>
+          <li><a href="#next">What’s next</a></li>
+        </ol>
+      </nav>
+
+      <div class="cs-content">
+        <section class="cs-section reveal" id="overview" aria-labelledby="overview-h">
+          <p class="eyebrow">Overview</p>
+          <h2 id="overview-h">A desktop that answers to your voice, and nothing else.</h2>
+          <div class="prose">
+            <p>I wanted my desktop to respond to my voice the way a phone assistant does, without sending audio to anyone’s server. The constraints were strict from the start: run offline on an ordinary CPU, cost almost nothing while waiting, understand my accent, and never do something dangerous because it misheard me.</p>
+            <p>Jarvis started as a smaller project called Murmur, built on PocketSphinx. Real use showed that recognizer wasn’t good enough, so the voice pipeline was rebuilt twice. A full code review then drove a round of fixes. This page covers what went wrong along the way and what I changed.</p>
+            <ul class="points">
+              <li><strong>Apps:</strong> open or focus any installed app by name, with your own voice aliases (“streamio” for Stremio).</li>
+              <li><strong>Desktop:</strong> switch workspaces, move a window, go fullscreen, change or mute the volume.</li>
+              <li><strong>Recording:</strong> start and stop screen recording with automatic HDR detection.</li>
+              <li><strong>Instant replay:</strong> the last two minutes stay in RAM; “clip that” saves them.</li>
+              <li><strong>Settings:</strong> a GTK 4 app that can close while voice control keeps running.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="how-it-works" aria-labelledby="how-h">
+          <p class="eyebrow">How it works</p>
+          <h2 id="how-h">Two speech models, one strict allowlist.</h2>
+          <div class="prose">
+            <p>Jarvis runs as three separate processes. A small <strong>service</strong> owns settings, app discovery and every action. A <strong>voice worker</strong> owns the microphone and both speech models. The <strong>settings app</strong> is just a client: closing it frees its memory and changes nothing else.</p>
+          </div>
+          <figure class="diagram">
+            <div class="diagram-box">
+              <svg viewBox="0 0 760 590" role="img" aria-label="Jarvis voice pipeline. The microphone feeds an energy gate, then Vosk listens for the wake word and the end of speech. Only the command audio goes to Whisper. Whisper's transcript crosses into the service as plain text, where an allowlist parser turns it into a typed intent for Hyprland, the app launcher or the recorder. The settings app is a separate process on a private socket.">
+                <defs><marker id="jv-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="dg-head"/></marker></defs>
+                <rect class="dg-zone" x="95" y="14" width="600" height="360" rx="14"/>
+                <text class="dg-zone-label" x="111" y="31">Voice worker process</text>
+
+                <rect class="dg-box" x="115" y="40" width="230" height="54" rx="10"/>
+                <text class="dg-t" x="230" y="63" text-anchor="middle">Microphone</text>
+                <text class="dg-s" x="230" y="81" text-anchor="middle">pw-record · 16 kHz mono</text>
+                <text class="dg-l" x="370" y="71">opens only after consent</text>
+                <line class="dg-a" x1="230" y1="94" x2="230" y2="126" marker-end="url(#jv-ah)"/>
+                <text class="dg-l" x="242" y="114">30 ms frames</text>
+
+                <rect class="dg-box" x="115" y="128" width="230" height="54" rx="10"/>
+                <text class="dg-t" x="230" y="151" text-anchor="middle">Energy gate</text>
+                <text class="dg-s" x="230" y="169" text-anchor="middle">10 dB over room noise</text>
+                <text class="dg-l" x="370" y="159">quiet audio never reaches a model</text>
+                <line class="dg-a" x1="230" y1="182" x2="230" y2="214" marker-end="url(#jv-ah)"/>
+                <text class="dg-l" x="242" y="202">speech</text>
+
+                <rect class="dg-box" x="115" y="216" width="230" height="54" rx="10"/>
+                <text class="dg-t" x="230" y="239" text-anchor="middle">Vosk</text>
+                <text class="dg-s" x="230" y="257" text-anchor="middle">small English model</text>
+                <text class="dg-l" x="370" y="247">always on: hears “Jarvis” and the end of speech</text>
+                <line class="dg-a" x1="230" y1="270" x2="230" y2="302" marker-end="url(#jv-ah)"/>
+                <text class="dg-l" x="242" y="290">command audio only</text>
+
+                <rect class="dg-box hot" x="115" y="304" width="230" height="54" rx="10"/>
+                <text class="dg-t" x="230" y="327" text-anchor="middle">Whisper small.en</text>
+                <text class="dg-s" x="230" y="345" text-anchor="middle">int8 · on the CPU</text>
+                <text class="dg-l" x="370" y="335">runs only for a command, about 0.3 s</text>
+
+                <line class="dg-a" x1="230" y1="358" x2="230" y2="408" marker-end="url(#jv-ah)"/>
+                <line class="dg-wall" x1="40" y1="390" x2="720" y2="390"/>
+                <text class="dg-wall-label" x="720" y="383" text-anchor="end">Text only · never a shell command</text>
+                <text class="dg-l" x="242" y="404">transcript</text>
+
+                <rect class="dg-box safe" x="115" y="410" width="230" height="54" rx="10"/>
+                <text class="dg-t" x="230" y="433" text-anchor="middle">Parser (service)</text>
+                <text class="dg-s" x="230" y="451" text-anchor="middle">allowlist → typed intent</text>
+
+                <rect class="dg-box" x="470" y="410" width="220" height="54" rx="10"/>
+                <text class="dg-t" x="580" y="433" text-anchor="middle">Settings app</text>
+                <text class="dg-s" x="580" y="451" text-anchor="middle">GTK 4 · separate process</text>
+                <line class="dg-a dash" x1="347" y1="437" x2="468" y2="437" marker-start="url(#jv-ah)" marker-end="url(#jv-ah)"/>
+                <text class="dg-l" x="408" y="429" text-anchor="middle">private socket</text>
+
+                <path class="dg-a" d="M230 464V490M130 490H550"/>
+                <line class="dg-a" x1="130" y1="490" x2="130" y2="514" marker-end="url(#jv-ah)"/>
+                <line class="dg-a" x1="340" y1="490" x2="340" y2="514" marker-end="url(#jv-ah)"/>
+                <line class="dg-a" x1="550" y1="490" x2="550" y2="514" marker-end="url(#jv-ah)"/>
+                <text class="dg-l" x="242" y="482">typed intent</text>
+
+                <rect class="dg-box" x="45" y="516" width="170" height="54" rx="10"/>
+                <text class="dg-t" x="130" y="539" text-anchor="middle">Hyprland</text>
+                <text class="dg-s" x="130" y="557" text-anchor="middle">workspaces · windows</text>
+                <rect class="dg-box" x="255" y="516" width="170" height="54" rx="10"/>
+                <text class="dg-t" x="340" y="539" text-anchor="middle">App launcher</text>
+                <text class="dg-s" x="340" y="557" text-anchor="middle">GIO desktop entries</text>
+                <rect class="dg-box" x="465" y="516" width="170" height="54" rx="10"/>
+                <text class="dg-t" x="550" y="539" text-anchor="middle">Recorder</text>
+                <text class="dg-s" x="550" y="557" text-anchor="middle">screen · instant replay</text>
+              </svg>
+            </div>
+            <figcaption>Vosk is cheap enough to run all the time, so it only decides when you are talking to Jarvis. Whisper is much stronger and wakes only for the few seconds of a command. Past the transcript, everything is typed data: workspace numbers are integers from 1 to 10, and apps are desktop entries, never executable strings.</figcaption>
+          </figure>
+          <div class="prose">
+            <p>The parser and the recognizer’s grammar are built from the same tables, so a phrase is listed only if it can be both heard and understood. The service socket is readable only by your user, and Linux peer credentials reject every other client. Apps that Jarvis launches run in their own systemd scopes, so stopping the service never closes your browser.</p>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="problems" aria-labelledby="problems-h">
+          <p class="eyebrow">Problems and fixes</p>
+          <h2 id="problems-h">What broke, and how I fixed it.</h2>
+          <div class="challenges">
+            <article class="challenge">
+              <h3>The recognizer couldn’t understand me</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The first version used PocketSphinx. In real use the wake word often took four tries, and my non-US accent made commands unreliable. A voice in the background, like a TV or a game, made it worse.</p></div>
+                <div><p class="tag fix">What I did</p><p>I split the job between two models. Vosk runs all the time but only listens for “Jarvis” and for the end of speech. Only the few seconds of the command go to Whisper small.en, which was trained on far more accents. The speech threshold follows the room and sits about 10 dB above its steady noise, a command ends after 0.6 s of quiet, and stray words after a command are ignored.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>Whisper decodes a command in about 0.3 s, and the always-on part stays at 0.2–0.6% of one core.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Commands spoken over a game were silently dropped</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>With background sound, Vosk sometimes never decided the speech had ended. The worker then flushed the command at its 8-second deadline and decoded it, but the service’s own deadline had already passed, so it threw away even a perfect transcript. Slow decoding could also look like a dead microphone.</p></div>
+                <div><p class="tag fix">What I did</p><p>The worker now reports when capture actually closed, on a monotonic clock. The service checks that the audio was captured inside the session, then allows up to 15 seconds for the result to arrive. Decoding time no longer counts toward the microphone check. Late, duplicate, low-confidence and cancelled results are still rejected.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>“Jarvis, open Steam” opened Steam with the Jarvis window hidden.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Memory crept up after every command</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>ONNX Runtime keeps a memory arena for Whisper’s scratch buffers and never gives it back. After a few commands the background process sat at about 1,090 MiB. Idle inference threads also spun on the CPU between tasks.</p></div>
+                <div><p class="tag fix">What I did</p><p>I disabled the CPU memory arena in the runtime’s configuration and return freed pages to the OS with <code>malloc_trim(0)</code> after each command. Threads now sleep between tasks. The model weights stay loaded, so commands never pay a reload cost, and precision and decoding are unchanged.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>Background memory fell from 1,090 to 657 MiB, and benchmark CPU time for decoding halved, from 51.1 to 25.9 CPU-seconds.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>The Commands page listed phrases you could never say</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>A code review found that the recognizer’s grammar was written separately from the command parser. Phrases like “please open Firefox” were accepted by the parser but could never come out of the recognizer. The tests still passed, because they only tested the parser.</p></div>
+                <div><p class="tag fix">What I did</p><p>The grammar is now generated from the parser’s own tables, and recognizer output is checked against that same grammar. New tests check that every example on the Commands page can be spoken, and that every sentence the grammar allows actually parses.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>One source of truth for what you can say, with a regression test for each review finding.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>“Open” a Steam game focused the Steam window instead</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>To find a running app, Jarvis treated the first word of a desktop entry’s launch command as its window class. Every Steam game launches through <code>steam steam://rungameid/N</code>, so it focused the Steam client. Browser web apps, Flatpak and <code>env</code> launchers had the same problem.</p></div>
+                <div><p class="tag fix">What I did</p><p>Known launcher programs are now skipped. Steam games are matched by their real window class, <code>steam_app_N</code>, and web apps by their own class. If both a native and a Flatpak copy exist, Jarvis prefers the native one unless an alias says otherwise.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>Games launch, or focus their own window if they are already running.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>A crashed service could leave the recorder running</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The screen recorder ran in its own session. If the service crashed, recording continued until the disk filled, and a restarted service had no idea it existed.</p></div>
+                <div><p class="tag fix">What I did</p><p>The recorder now starts with a parent-death signal, so it finishes its file and exits when the service dies. It is launched from one long-lived thread, because Linux sends that signal when the <em>thread</em> that started a child exits. On startup the service reports any leftover recorder and partial files, and refuses to start a second one.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>No runaway recordings, and partial files are listed instead of lost.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>An HDR recording isn’t HDR just because the screen is</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>A 10-bit pixel format or an HDR monitor doesn’t prove a recording kept its HDR, and a washed-out preview doesn’t prove it lost it. It’s easy to ship a recorder that silently falls back to SDR.</p></div>
+                <div><p class="tag fix">What I did</p><p>Jarvis reads the monitor’s color preset from Hyprland when capture starts and records 10-bit HEVC. Before reporting success, it checks the file with <code>ffprobe</code> for PQ transfer, BT.2020 primaries and limited range. Anything else is reported as an error, and the file is kept for inspection.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>A 2,560×1,440 HDR recording and an instant replay both passed the metadata check.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="results" aria-labelledby="results-h">
+          <p class="eyebrow">Results</p>
+          <h2 id="results-h">Measured, not guessed.</h2>
+          <div class="prose">
+            <p>Every number below comes from a recorded benchmark on my desktop (Ryzen 7 7800X3D, 16 threads) using public test recordings. They show speed and resource use. They don’t measure recognition accuracy across every voice or room, and I don’t claim they do.</p>
+          </div>
+          <div class="table-wrap">
+            <table class="data">
+              <thead><tr><th scope="col">Measurement</th><th scope="col">Result</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">Command after a pause, median</th><td>1.05 s</td></tr>
+                <tr><th scope="row">Command in one breath, median</th><td>0.91 s</td></tr>
+                <tr><th scope="row">Whisper decode on its own, median</th><td>286 ms</td></tr>
+                <tr><th scope="row">Service start to ready, median of 80</th><td>87.7 ms</td></tr>
+                <tr><th scope="row">Settings window first paint</th><td>86 ms</td></tr>
+                <tr><th scope="row">CPU while listening for the wake word</th><td>0.2–0.6% of one core</td></tr>
+                <tr><th scope="row">Background memory after commands</th><td>657 MiB</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout">
+            <p><strong>A trade-off I chose on purpose.</strong> Checking commands spoken in one breath more strictly adds about 245 ms of latency. I kept it, because opening the wrong app is worse than waiting a quarter of a second.</p>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="skills" aria-labelledby="skills-h">
+          <p class="eyebrow">Skills</p>
+          <h2 id="skills-h">What this project took.</h2>
+          <div class="skills-grid">
+            <div class="skill"><h3>Speech pipelines</h3><p>Pairing a cheap always-on model with a strong on-demand one; energy gating and end-of-speech detection.</p></div>
+            <div class="skill"><h3>Linux systems</h3><p>Process lifetimes, parent-death signals, systemd user scopes, and Unix sockets with peer credentials.</p></div>
+            <div class="skill"><h3>Performance work</h3><p>Reproducible memory and CPU benchmarks; tuning ONNX Runtime’s allocator and thread pool.</p></div>
+            <div class="skill"><h3>Desktop integration</h3><p>Hyprland’s IPC, GIO desktop entries, PipeWire capture and Waybar status.</p></div>
+            <div class="skill"><h3>Secure design</h3><p>Allowlisted, typed intents; no shell; bounded queues and message sizes.</p></div>
+            <div class="skill"><h3>Video and HDR</h3><p>10-bit HEVC capture, instant replay, and metadata validation with FFmpeg tools.</p></div>
+            <div class="skill"><h3>GTK 4 apps</h3><p>A settings app built as a separate client that can close while the service keeps running.</p></div>
+            <div class="skill"><h3>Testing</h3><p>176 automated tests, including a regression test for every finding of the code review.</p></div>
+          </div>
+        </section>
+
+        <section class="cs-section reveal" id="next" aria-labelledby="next-h">
+          <p class="eyebrow">What’s next</p>
+          <h2 id="next-h">Still to prove.</h2>
+          <div class="prose">
+            <ul class="points">
+              <li>Interactive tests of window controls on a disposable window under Hyprland.</li>
+              <li>Keyboard, screen-reader and fractional-scaling checks in a real desktop session.</li>
+              <li>Recognition accuracy measured across more voices, accents and rooms.</li>
+            </ul>
+            <p><a class="arrow-link" href="https://github.com/abdullaho21/jarvis" rel="noopener">Read the source on GitHub <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M5 11 11 5M6 5h5v5"/></svg></a></p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </article>
+
+  <nav class="wrap more" aria-label="More projects">
+    <a href="../arabic-localization/"><span class="eyebrow">Next project</span><b>Arabic for games that shipped without it</b><span>Homura Hime and What Remains of Edith Finch</span></a>
+    <a href="../gravity-rush/"><span class="eyebrow">Also</span><b>Gravity Rush Remastered research</b><span>PS4 file formats decoded and redrawn in <span class="nw">C++</span></span></a>
+  </nav>
+
+  <section class="contact" id="contact" aria-labelledby="contact-h">
+    <div class="wrap reveal">
+      <p class="eyebrow">Contact</p>
+      <h2 class="h2" id="contact-h">Need something like this built?</h2>
+      <p class="contact-lede">Tell me what you’re building and where you need help. Email reaches me fastest.</p>
+      <div class="email-row">
+        <a class="email" id="email" href="mailto:abdullahalsuqayhi5@gmail.com">abdullahalsuqayhi5@gmail.com</a>
+        <button class="btn" id="copy" type="button"><span id="copy-label">Copy</span><span class="sr-only"> email address</span></button>
+      </div>
+      <span class="sr-only" id="live" aria-live="polite"></span>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <p>© <span id="year">2026</span> Abdullah Alsuqayhi</p>
+    <a href="../">Home</a>
+  </div>
+</footer>
+</body>
+</html>
