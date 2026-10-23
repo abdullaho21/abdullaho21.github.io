@@ -162,9 +162,9 @@ img{max-width:100%;height:auto;display:block}
 .ix-end svg{width:1.1rem;height:1.1rem;color:var(--fg-2);transition:transform .3s var(--ease),color .2s}
 .index a:hover .ix-end svg{transform:translateX(4px);color:var(--accent)}
 @media (min-width:52rem){
-  .index a{grid-template-columns:minmax(14rem,1fr) 2fr auto;padding-block:1.35rem}
+  .index a{grid-template-columns:minmax(14rem,1fr) 2fr 8rem;padding-block:1.35rem}
   .ix-desc{grid-column:2;grid-row:1}
-  .ix-end{grid-column:3;grid-row:1}
+  .ix-end{grid-column:3;grid-row:1;justify-content:flex-end}
 }
 @media (max-width:30rem){.ix-tag{display:none}}
 .motion .rise{animation:rise .9s var(--ease) both;animation-delay:calc(var(--d,0) * 110ms + 60ms)}
