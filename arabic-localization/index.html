@@ -56,11 +56,11 @@
         <div class="cs-kicker rise" style="--d:1"><p class="eyebrow">Case study · Localization · 2026</p><span class="status testing"><i></i>In-game testing</span></div>
         <h1 class="rise" style="--d:1">Arabic for games that shipped without it</h1>
         <p class="cs-sub rise" style="--d:2">Homura Hime and What Remains of Edith Finch, in Arabic.</p>
-        <p class="cs-lede rise" style="--d:3">Neither game supports Arabic, and neither engine draws it correctly on its own. Arabic letters join and change shape, sentences run right to left, and diacritics sit above and below their letters. These games’ text systems assume none of that. For Homura Hime I built the whole pipeline, from pulling every string out of the game to a plugin that draws Arabic in its menus and dialogue. For Edith Finch I built an Unreal Engine patch.</p>
+        <p class="cs-lede rise" style="--d:3">Neither game supports Arabic, and neither engine draws it correctly on its own. Arabic letters join and change shape, sentences run right to left, and diacritics sit above and below their letters. These games’ text systems assume none of that. For Homura Hime I built the whole pipeline, from pulling every string out of the game to a plugin that draws Arabic in its menus and dialogue. For Edith Finch, where most words on screen are 3D models, I built Arabic letter models in the game’s own format.</p>
         <dl class="cs-meta rise" style="--d:4">
           <div><dt class="eyebrow">Role</dt><dd>Project lead: scope, glossary and style decisions, and every in-game test. AI agents drafted the Arabic and assisted with engineering.</dd></div>
           <div><dt class="eyebrow">When</dt><dd>September–October 2026</dd></div>
-          <div><dt class="eyebrow">Engines</dt><dd>Unity 6 (Homura Hime), Unreal Engine (Edith Finch)</dd></div>
+          <div><dt class="eyebrow">Engines</dt><dd>Unity 6 (Homura Hime), Unreal Engine 4 (Edith Finch)</dd></div>
           <div><dt class="eyebrow">Stack</dt><dd>C#, BepInEx, Harmony, Python, UnityPy, CAMeL Tools, PowerShell</dd></div>
         </dl>
       </div>
@@ -318,10 +318,112 @@
 
         <section class="cs-section reveal" id="edith-finch" aria-labelledby="edith-h">
           <p class="eyebrow">What Remains of Edith Finch</p>
-          <h2 id="edith-h">An Unreal Engine patch, packaged to install in one click.</h2>
+          <h2 id="edith-h">A game whose words are 3D models.</h2>
           <div class="prose">
-            <p>Edith Finch was the first game I localized into Arabic. It runs on Unreal Engine, which has its own localization system, so the patch follows Unreal’s route instead of a runtime plugin. The Arabic text ships in a priority patch archive, <code>FinchGame_Arabic_P.pak</code>, which the engine loads on top of the original files. Nothing in the game’s folder is overwritten.</p>
-            <p>The patch installs and uninstalls with one click, through batch files driving a PowerShell script, and comes with instructions in both Arabic and English.</p>
+            <p>Edith Finch was the first game I localized into Arabic. It runs on an early version of Unreal Engine 4 and tells its story in words placed in the world, and most of the family’s stories have their own handwriting font. Those words aren’t text the engine lays out. Each letter is a small 3D model, and the game has no translation files to edit.</p>
+            <p>The ground rules were the same as for Homura Hime: game files stay read-only, and nothing in the game’s code changes. Everything ships in one extra archive, <code>FinchGame_Arabic_P.pak</code>, which the engine loads on top of the original. Removing it restores the game.</p>
+          </div>
+          <figure class="diagram">
+            <div class="diagram-box">
+              <svg viewBox="0 0 760 520" role="img" aria-label="Edith Finch patch pipeline. The game's archive is read without changes. A custom parser finds 1,093 English text layouts in 118 maps. Each Arabic line is shaped with Noto Naskh Arabic and cut into joined clusters. Each cluster is cooked into a 3D glyph mesh, 4,691 in all, added to nine of the game's fonts. The English layouts are rewritten to use them, 1,035 layouts in 93 maps, and everything ships in one patch archive that loads over the original.">
+                <defs><marker id="ef-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="dg-head"/></marker></defs>
+
+                <rect class="dg-box" x="40" y="20" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="43" text-anchor="middle">Game archive</text>
+                <text class="dg-s" x="165" y="61" text-anchor="middle">Pak v3 · Oodle · read-only</text>
+                <text class="dg-l" x="350" y="51">21,743 entries · hashes checked before and after</text>
+                <line class="dg-a" x1="165" y1="74" x2="165" y2="104" marker-end="url(#ef-ah)"/>
+
+                <rect class="dg-box" x="40" y="106" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="129" text-anchor="middle">Read the maps</text>
+                <text class="dg-s" x="165" y="147" text-anchor="middle">own UE4 package parser</text>
+                <text class="dg-l" x="350" y="137">1,093 English text layouts in 118 maps</text>
+                <line class="dg-a" x1="165" y1="160" x2="165" y2="190" marker-end="url(#ef-ah)"/>
+
+                <rect class="dg-box" x="40" y="192" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="215" text-anchor="middle">Shape the Arabic</text>
+                <text class="dg-s" x="165" y="233" text-anchor="middle">Noto Naskh · joins, marks, RTL</text>
+                <text class="dg-l" x="350" y="223">each line cut into joined clusters</text>
+                <line class="dg-a" x1="165" y1="246" x2="165" y2="276" marker-end="url(#ef-ah)"/>
+
+                <rect class="dg-box" x="40" y="278" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="301" text-anchor="middle">Cook glyph meshes</text>
+                <text class="dg-s" x="165" y="319" text-anchor="middle">3 LODs · shipped “P” as template</text>
+                <text class="dg-l" x="350" y="309">4,691 meshes added to 9 of the game’s fonts</text>
+                <line class="dg-a" x1="165" y1="332" x2="165" y2="362" marker-end="url(#ef-ah)"/>
+
+                <rect class="dg-box hot" x="40" y="364" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="387" text-anchor="middle">Rewrite the layouts</text>
+                <text class="dg-s" x="165" y="405" text-anchor="middle">private-use code points</text>
+                <text class="dg-l" x="350" y="395">1,035 layouts in 93 maps</text>
+                <line class="dg-a" x1="165" y1="418" x2="165" y2="448" marker-end="url(#ef-ah)"/>
+
+                <rect class="dg-box safe" x="40" y="450" width="250" height="54" rx="10"/>
+                <text class="dg-t" x="165" y="473" text-anchor="middle">FinchGame_Arabic_P.pak</text>
+                <text class="dg-s" x="165" y="491" text-anchor="middle">loads over the original</text>
+                <text class="dg-l" x="350" y="481">removing it restores the game</text>
+              </svg>
+            </div>
+            <figcaption>The game draws a word by looking up each character in a mesh font. The patch adds new characters to those fonts, one for each shaped Arabic cluster, so the game’s own renderer draws Arabic with no change to its code.</figcaption>
+          </figure>
+          <div class="challenges">
+            <article class="challenge">
+              <h3>The game has no translation files</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>Unreal games usually keep their text in <code>.locres</code> files, and my first plan was to rebuild those. Edith Finch has none. Its dialogue sits in 12 tables with 1,286 English rows, so I changed three strings there as a test. The menu stayed in English.</p></div>
+                <div><p class="tag fix">What I did</p><p>I scanned all 20,261 of the game’s assets and found the text the player sees baked into the maps. Every piece of text owns a saved layout for each language, holding the string, a position for every letter and the font that draws it. So the patch rewrites the English layouts themselves: 1,093 of them, in 118 maps.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>A test patch that drew “TEST” in the main menu proved a removable archive can replace a map.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>The words are 3D models, not text</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>Each of the game’s mesh fonts maps one character to one small cooked 3D model. None of them has a single Arabic letter, so real Arabic characters drew as boxes.</p></div>
+                <div><p class="tag fix">What I did</p><p>First I proved how the lookup works: pointing Arabic characters at existing Latin models drew “A B C D”. Then I built new letter models in the game’s own cooked format, with three levels of detail each, using the shipped letter “P” as the template. They are added to the fonts at private-use code points. Font entries point to their model by a plain path, so adding letters needed no changes to the package’s import table.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg><span>On 26 September the main menu showed <span class="ar-inline" lang="ar">العب</span> (“Play”) right-aligned on the English baseline, joined, with its dot below.</span></p>
+            </article>
+
+            <article class="challenge">
+              <h3>One shape per letter can’t spell Arabic</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>My first version gave each Arabic character one model. But Arabic letters change shape with their position in a word, and a font entry holds only one shape. It failed on the first word that needed one letter in two forms, <span class="ar-inline" lang="ar">الخيارات</span> (“Options”). Arabic presentation forms, the usual shortcut, don’t cover the marks or the font’s ligatures either.</p></div>
+                <div><p class="tag fix">What I did</p><p>Each line is now shaped first with a real Arabic font, Noto Naskh Arabic, which joins the letters, places the marks and orders the words right to left. The shaped line is cut into clusters, each cluster becomes its own model at its own code point, and the layout gets new letter positions. A cluster is reused wherever the same shape appears at the same size.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>The latest build rewrites 1,035 layouts in 93 maps with 4,691 Arabic glyph models across 9 of the game’s fonts.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Diacritics need room the English lines don’t have</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>Tashkeel sits above and below the letters, so fully vocalized Arabic stands taller than English. From the files I estimated a menu line pitch of 121 units and a 1.1× zoom on the selected item.</p></div>
+                <div><p class="tag fix">What I did</p><p>I built a test menu that uses every mark (fatha, damma, kasra, sukun, shadda with a vowel, tanween, hamza with kasra), 46 models in all, and measured it in the game: a pitch of 130 units and a 1.18× zoom. Story lines now get a taller pitch where Arabic needs it, and one-line menu items shrink to fit instead of wrapping.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>Every mark sat on its own letter, even on the highlighted item. Four marks touched the line below by about a pixel.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>A file format modern tools can’t open</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>The packages use an early Unreal Engine 4 format, from around version 4.9 or 4.10. Current UAsset tools can’t read them at all, and the main archive is compressed with Oodle.</p></div>
+                <div><p class="tag fix">What I did</p><p>The project reads and writes the packages itself, and each writer had to reproduce the original files byte for byte before I trusted it. Some packages carry an extra version table that shifts the header, which broke my first scan on 21 of them until the parser handled it. Decompression uses the game’s own Oodle library, loaded in place and never copied.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>All 21,743 archive entries read with verified hashes, and four of the game’s own letter models re-encode byte for byte.</p>
+            </article>
+
+            <article class="challenge">
+              <h3>Words in the credits ran into each other</h3>
+              <div class="pf">
+                <div><p class="tag">Problem</p><p>Playing a full build, I saw words in the credits overlapping. I had no screenshot of it, so the cause had to be found offline.</p></div>
+                <div><p class="tag fix">What I did</p><p>Analysis found three causes: credit blocks in the pause menu ran into the next block, dots under one line touched the line below, and Latin names were drawn 27% larger than in English. Blocks are now held to their English footprint, lines keep an even clearance, and names use the English letter height. A neighbour check now places every text’s real outlines at its position in the world and compares them.</p></div>
+              </div>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>In that model, no texts that were apart in English overlap in Arabic, except six bathtub pairs it reports. The fix still has to be confirmed in the game.</p>
+            </article>
+          </div>
+          <div class="prose">
+            <p>The Arabic uses Noto Naskh Arabic for most of the game. For Edie’s letter and pages I chose Aref Ruqaa, for a slightly older, handwritten feel. The title logo’s three lines step down to the right in English, so in Arabic I mirrored the steps.</p>
+            <p>The patch installs and uninstalls with one click, through batch files driving a PowerShell script, with instructions in Arabic and English. It looks for Steam, Epic Games and GOG installs, checks its own file before and after copying, warns if the game is a different version from the one it was built for, and refuses to install over an older test patch.</p>
             <p>The most useful thing Edith Finch taught me was not a tool. It was the habit of checking how a game is built before planning anything, which is exactly what saved Homura Hime from a pipeline built for the wrong engine.</p>
           </div>
         </section>
@@ -330,7 +432,7 @@
           <p class="eyebrow">Results</p>
           <h2 id="results-h">Where it stands.</h2>
           <div class="table-wrap">
-            <table class="data">
+            <table class="data aligned">
               <thead><tr><th scope="col">Homura Hime</th><th scope="col">Result</th></tr></thead>
               <tbody>
                 <tr><th scope="row">Strings extracted (UI, dialogue, names)</th><td>10,991</td></tr>
@@ -342,6 +444,20 @@
                 <tr><th scope="row">In-game render tests</th><td>3</td></tr>
               </tbody>
               <caption>The 37 untranslated rows are debug and template strings, left blank on purpose. The plugin compiles against the game’s own libraries and builds every passing string with zero problems; its first full run in the game is next.</caption>
+            </table>
+          </div>
+          <div class="table-wrap">
+            <table class="data aligned">
+              <thead><tr><th scope="col">Edith Finch</th><th scope="col">Result</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">English rows in 12 dialogue tables</th><td>1,286</td></tr>
+                <tr><th scope="row">Text layouts found in the maps</th><td>1,093 in 118 maps</td></tr>
+                <tr><th scope="row">Layouts rewritten in Arabic, latest build</th><td>1,035 in 93 maps</td></tr>
+                <tr><th scope="row">Layouts kept in English on purpose</th><td>58</td></tr>
+                <tr><th scope="row">Arabic glyph models cooked</th><td>4,691</td></tr>
+                <tr><th scope="row">Unit tests</th><td>137</td></tr>
+              </tbody>
+              <caption>The layouts kept in English are placeholders, arrows, a few signs, and four year labels made only of digits. Seen in the game on Windows: Arabic menu words, a fully vocalized menu, and the main menu, replay dialog and title logo of an early full build. A full play-through of the latest build is next.</caption>
             </table>
           </div>
         </section>
@@ -356,7 +472,7 @@
             <div class="skill"><h3>Language tooling</h3><p>Grammar checks built on CAMeL Tools morphology for agreement and pronoun errors.</p></div>
             <div class="skill"><h3>Data pipelines</h3><p>Batching, import, validation, sign-offs and reproducible builds from thousands of rows.</p></div>
             <div class="skill"><h3>Test design</h3><p>A regression case for every false alarm, and parity tests across two languages.</p></div>
-            <div class="skill"><h3>Unreal Engine</h3><p>Localization assets and priority .pak patches that load over the original game.</p></div>
+            <div class="skill"><h3>Unreal Engine</h3><p>Reading and writing UE4 packages without engine tools, cooked 3D mesh fonts, and priority .pak patches.</p></div>
             <div class="skill"><h3>Project leadership</h3><p>Ground rules, a decision log, and an evidence ledger that separates “seen in game” from “verified offline”.</p></div>
           </div>
         </section>
@@ -370,6 +486,8 @@
               <li>Right-to-left handling for tutorial lines that mix text with key icons.</li>
               <li>About 80 images with English text: area titles, boss cards, result screens and the title logo.</li>
               <li>A check that measures whether Arabic fits each text box, and the choice of a bundled Arabic font.</li>
+              <li>Edith Finch: a full play-through of the latest build, including the credits fix and the mirrored title logo.</li>
+              <li>The Edith Finch installer on a second PC. So far it has run only against stand-in game folders.</li>
             </ul>
           </div>
         </section>

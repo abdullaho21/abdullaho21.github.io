@@ -425,6 +425,7 @@ img{max-width:100%;height:auto;display:block}
 .data td{color:var(--fg);font-weight:600;white-space:nowrap}
 .data tbody tr:last-child th,.data tbody tr:last-child td{border-bottom:0}
 @media (max-width:30rem){.data th,.data td{padding:.7rem .9rem}.data td{white-space:normal;text-align:right}}
+@media (min-width:46rem){.data.aligned thead th:last-child{width:12rem}}
 .callout{display:grid;gap:.5rem;padding:1.2rem 1.35rem;border:1px solid var(--line);border-left:2px solid var(--accent);border-radius:4px 16px 16px 4px;background:var(--card)}
 .callout p{color:var(--fg-2);line-height:1.7}
 .callout strong{color:var(--fg)}
