@@ -56,7 +56,7 @@
         <div class="cs-kicker rise" style="--d:1"><p class="eyebrow">Case study · Localization · 2026</p><span class="status testing"><i></i>In-game testing</span></div>
         <h1 class="rise" style="--d:1">Arabic for games that shipped without it</h1>
         <p class="cs-sub rise" style="--d:2">Homura Hime and What Remains of Edith Finch, in Arabic.</p>
-        <p class="cs-lede rise" style="--d:3">Neither game supports Arabic, and neither engine draws it correctly on its own. Arabic letters join and change shape, sentences run right to left, and diacritics sit above and below their letters. These games’ text systems assume none of that. For Homura Hime I built the whole pipeline, from pulling every string out of the game to a plugin that draws Arabic in its menus and dialogue. For Edith Finch, where most words on screen are 3D models, I built Arabic letter models in the game’s own format.</p>
+        <p class="cs-lede rise" style="--d:3">Neither game supports Arabic, and neither engine draws it correctly on its own. Arabic letters join and change shape, sentences run right to left, and diacritics sit above and below their letters. These games’ text systems assume none of that. For Homura Hime I built the whole pipeline, from pulling every string out of the game to a plugin that draws Arabic in its menus and dialogue. For Edith Finch, where most words on screen are 3D models, I built Arabic letter models in the game’s own format and played the whole game through in Arabic.</p>
         <dl class="cs-meta rise" style="--d:4">
           <div><dt class="eyebrow">Role</dt><dd>Project lead: scope, glossary and style decisions, and every in-game test. AI agents drafted the Arabic and assisted with engineering.</dd></div>
           <div><dt class="eyebrow">When</dt><dd>September–October 2026</dd></div>
@@ -216,7 +216,7 @@
 
         <section class="cs-section reveal" id="rendering" aria-labelledby="rendering-h">
           <p class="eyebrow">Making Arabic render</p>
-          <h2 id="rendering-h">Three tests in the real game.</h2>
+          <h2 id="rendering-h">Three tests, then the real thing.</h2>
           <div class="prose">
             <p>Unity’s text components don’t shape Arabic and don’t lay out right to left. I tested each idea inside the game with a small test plugin before building the real one.</p>
           </div>
@@ -245,12 +245,20 @@
                 <p>Instead of guessing line widths, the plugin lets the game wrap each paragraph with its real font and box size, then mirrors every line and right-aligns it. Dialogue now types in from the right, paragraphs wrap in the right order, and input icons like <code>[L3]</code> stay intact. One thing broke: right-aligned menu labels slid out of their red bars. That set the rule that menus keep the game’s own layout.</p>
               </div>
             </li>
-            <li class="step now">
+            <li class="step ok">
               <span class="step-n" aria-hidden="true">4</span>
               <div class="step-body">
+                <p class="when">Play test</p>
+                <h3>Two hours in Arabic</h3>
+                <p>The real plugin is built from all 400 passing batches and verified offline. I played the first three areas of the game in Arabic, about two hours of play.</p>
+              </div>
+            </li>
+            <li class="step now">
+              <span class="step-n" aria-hidden="true">5</span>
+              <div class="step-body">
                 <p class="when">Next</p>
-                <h3>The full Arabic build in game</h3>
-                <p>The real plugin is built from all 400 passing batches and verified offline. Its first full run in the game is the next test.</p>
+                <h3>The rest of the game</h3>
+                <p>A play-through of the remaining areas in Arabic.</p>
               </div>
             </li>
           </ol>
@@ -321,7 +329,7 @@
           <h2 id="edith-h">A game whose words are 3D models.</h2>
           <div class="prose">
             <p>Edith Finch was the first game I localized into Arabic. It runs on an early version of Unreal Engine 4 and tells its story in words placed in the world, and most of the family’s stories have their own handwriting font. Those words aren’t text the engine lays out. Each letter is a small 3D model, and the game has no translation files to edit.</p>
-            <p>The ground rules were the same as for Homura Hime: game files stay read-only, and nothing in the game’s code changes. Everything ships in one extra archive, <code>FinchGame_Arabic_P.pak</code>, which the engine loads on top of the original. Removing it restores the game.</p>
+            <p>The ground rules were the same as for Homura Hime: game files stay read-only, and nothing in the game’s code changes. Everything ships in one extra archive, <code>FinchGame_Arabic_P.pak</code>, which the engine loads on top of the original. Removing it restores the game. I have played the whole game through in Arabic, from start to finish.</p>
           </div>
           <figure class="diagram">
             <div class="diagram-box">
@@ -418,7 +426,7 @@
                 <div><p class="tag">Problem</p><p>Playing a full build, I saw words in the credits overlapping. I had no screenshot of it, so the cause had to be found offline.</p></div>
                 <div><p class="tag fix">What I did</p><p>Analysis found three causes: credit blocks in the pause menu ran into the next block, dots under one line touched the line below, and Latin names were drawn 27% larger than in English. Blocks are now held to their English footprint, lines keep an even clearance, and names use the English letter height. A neighbour check now places every text’s real outlines at its position in the world and compares them.</p></div>
               </div>
-              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>In that model, no texts that were apart in English overlap in Arabic, except six bathtub pairs it reports. The fix still has to be confirmed in the game.</p>
+              <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>Confirmed in the game during my full play-through.</p>
             </article>
           </div>
           <div class="prose">
@@ -442,8 +450,9 @@
                 <tr><th scope="row">Right-to-left parity cases, Python vs C#</th><td>493 / 493</td></tr>
                 <tr><th scope="row">Install and removal tests</th><td>12 / 12</td></tr>
                 <tr><th scope="row">In-game render tests</th><td>3</td></tr>
+                <tr><th scope="row">Played in Arabic so far</th><td>3 areas, about 2 h</td></tr>
               </tbody>
-              <caption>The 37 untranslated rows are debug and template strings, left blank on purpose. The plugin compiles against the game’s own libraries and builds every passing string with zero problems; its first full run in the game is next.</caption>
+              <caption>The 37 untranslated rows are debug and template strings, left blank on purpose. The plugin compiles against the game’s own libraries and builds every passing string with zero problems. The rest of the game still has to be played in Arabic.</caption>
             </table>
           </div>
           <div class="table-wrap">
@@ -456,8 +465,9 @@
                 <tr><th scope="row">Layouts kept in English on purpose</th><td>58</td></tr>
                 <tr><th scope="row">Arabic glyph models cooked</th><td>4,691</td></tr>
                 <tr><th scope="row">Unit tests</th><td>137</td></tr>
+                <tr><th scope="row">Played in Arabic</th><td>Start to finish</td></tr>
               </tbody>
-              <caption>The layouts kept in English are placeholders, arrows, a few signs, and four year labels made only of digits. Seen in the game on Windows: Arabic menu words, a fully vocalized menu, and the main menu, replay dialog and title logo of an early full build. A full play-through of the latest build is next.</caption>
+              <caption>The layouts kept in English are placeholders, arrows, a few signs, and four year labels made only of digits. I played the finished patch through from start to finish.</caption>
             </table>
           </div>
         </section>
@@ -482,12 +492,10 @@
           <h2 id="next-h">The remaining work.</h2>
           <div class="prose">
             <ul class="points">
-              <li>The first in-game run of the full Arabic build, then a human review pass over the 159 warnings.</li>
+              <li>Homura Hime: the rest of the game in Arabic, then a human review pass over the 159 warnings.</li>
               <li>Right-to-left handling for tutorial lines that mix text with key icons.</li>
               <li>About 80 images with English text: area titles, boss cards, result screens and the title logo.</li>
               <li>A check that measures whether Arabic fits each text box, and the choice of a bundled Arabic font.</li>
-              <li>Edith Finch: a full play-through of the latest build, including the credits fix and the mirrored title logo.</li>
-              <li>The Edith Finch installer on a second PC. So far it has run only against stand-in game folders.</li>
             </ul>
           </div>
         </section>
