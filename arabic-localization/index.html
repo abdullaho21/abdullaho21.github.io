@@ -53,7 +53,7 @@
     <header class="cs-hero">
       <div class="wrap">
         <a class="back rise" style="--d:0" href="../#work"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M13 8H3M7 4 3 8l4 4"/></svg>All work</a>
-        <div class="cs-kicker rise" style="--d:1"><p class="eyebrow">Case study · Localization · 2026</p><span class="status testing"><i></i>In-game testing</span></div>
+        <div class="cs-kicker rise" style="--d:1"><p class="eyebrow">Case study · Localization · 2026</p><span class="statuses"><span class="status"><i></i>Edith Finch complete</span><span class="status testing"><i></i>Homura Hime in testing</span></span></div>
         <h1 class="rise" style="--d:1">Arabic for games that shipped without it</h1>
         <p class="cs-sub rise" style="--d:2">Homura Hime and What Remains of Edith Finch, in Arabic.</p>
         <p class="cs-lede rise" style="--d:3">Neither game supports Arabic, and neither engine draws it correctly on its own. Arabic letters join and change shape, sentences run right to left, and diacritics sit above and below their letters. These games’ text systems assume none of that. For Homura Hime I built the whole pipeline, from pulling every string out of the game to a plugin that draws Arabic in its menus and dialogue. For Edith Finch, where most words on screen are 3D models, I built Arabic letter models in the game’s own format and played the whole game through in Arabic.</p>
@@ -424,7 +424,7 @@
               <h3>Words in the credits ran into each other</h3>
               <div class="pf">
                 <div><p class="tag">Problem</p><p>Playing a full build, I saw words in the credits overlapping. I had no screenshot of it, so the cause had to be found offline.</p></div>
-                <div><p class="tag fix">What I did</p><p>Analysis found three causes: credit blocks in the pause menu ran into the next block, dots under one line touched the line below, and Latin names were drawn 27% larger than in English. Blocks are now held to their English footprint, lines keep an even clearance, and names use the English letter height. A neighbour check now places every text’s real outlines at its position in the world and compares them.</p></div>
+                <div><p class="tag fix">What I did</p><p>Analysis found three causes: credit blocks in the pause menu ran into the next block, dots under one line touched the line below, and Latin names were drawn 27% larger than in English. Blocks are now held to their English footprint, lines keep an even clearance, and names use the English letter height. A neighbor check now places every text’s real outlines at its position in the world and compares them.</p></div>
               </div>
               <p class="result"><svg viewBox="0 0 20 20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 10.5 3.2 3L15 6.5"/></svg>Confirmed in the game during my full play-through.</p>
             </article>

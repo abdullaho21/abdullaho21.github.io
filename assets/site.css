@@ -195,6 +195,7 @@ img{max-width:100%;height:auto;display:block}
 .status{display:inline-flex;align-items:center;gap:.45rem;padding:.2rem .65rem;border:1px solid var(--line);border-radius:999px;font:500 var(--fs-xs)/1.5 var(--sans);color:var(--fg-2)}
 .status i{width:.4rem;height:.4rem;border-radius:50%;background:var(--ok)}
 .status.testing i{background:var(--accent)}
+.statuses{display:flex;flex-wrap:wrap;gap:.5rem}
 .case h3{font-size:var(--fs-xl);font-weight:640;font-stretch:110%;line-height:1.05;letter-spacing:-.035em;text-wrap:balance}
 .case h3 a{text-decoration:none}
 .case h3 a:hover{color:var(--accent)}
