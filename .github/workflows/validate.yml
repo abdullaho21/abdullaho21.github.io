@@ -1,0 +1,28 @@
+name: Validate site
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: python scripts/check_site.py
+      - run: node --check assets/site.js
+      - run: node --check assets/mesh.js
